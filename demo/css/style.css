@@ -1,0 +1,22 @@
+.sme--section {
+  min-height: calc(100vh - 50px);
+  display: flex;
+  align-items: center;
+}
+
+.sme--flex {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sme--flex-item {
+  flex: 1;
+  padding: 10px;
+}
+
+@media screen and (orientation: portrait) {
+  .sme--flex {
+    flex-direction: column;
+  }
+}
