@@ -90,4 +90,4 @@ function shortme(input = "", options = {}) {
   return output;
 }
 
-export default shortme;
+mdoule.exports.shortme = shortme;

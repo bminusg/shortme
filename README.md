@@ -6,7 +6,7 @@ Create a short slug version from your text input
 
 - Run `npm install shortme --save`
 
-## Usage
+## Useage
 
 ```JavaScript
 const shortme = require("shortme");
