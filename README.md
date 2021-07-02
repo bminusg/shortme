@@ -1,27 +1,29 @@
 # shortme
 
-Create a short slug version from your text input
+Create a short slug version from your text input. This could be useful for your filenames or creative slugs.
 
 ## Installation
 
 - Run `npm install shortme --save`
 
-## Useage
+## Usage
 
 ```JavaScript
 const shortme = require("shortme");
-const yourShortSlugVersion = shortme("Your Text Input", options)
+shortme("Your Text Input", options) // Return "yti"
 
 ```
 
-## Options
+## options `Type: Object`
 
-Options is an Object that helps you to configurate custom settings
+### delimiterChar `Type: String, Default: "_"`
 
-```JavaScript
-const options = {
-    delimiterChar: "", // {String} defines delimiter char sign. Default: "_"
-    maxCharLength: 16 // {Number} defines max size of returning output
-}
+Define delimiter char sign
 
-```
+### maxCharLength `Type: Number, Default: 16`
+
+Define max length from returning output String
+
+## Demo
+
+Live demo available on http://projects.bminusg.de/shortme/

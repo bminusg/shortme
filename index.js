@@ -32,15 +32,19 @@ function umlauts(value) {
  *
  */
 
-function getShort(value = "") {
+function getShort(value = "", maxLength) {
   const vowels = ["a", "e", "i", "o", "u"];
   const firstChar = value[0];
   const lastChar = value[value.length - 1];
   let charChunks = value.substring(1, value.length - 2).split("");
 
+  // REMOVE VOWELS
   charChunks = charChunks.filter((char) => vowels.indexOf(char) === -1);
-  if (charChunks.length > 4)
+
+  // REMOVE EVERY SECOND CHAR IF MAX LENGTH MATCHES
+  while (charChunks.length > maxLength - 1) {
     charChunks = charChunks.filter((char, idx) => idx % 2 !== 0);
+  }
 
   return firstChar + charChunks.join("") + lastChar;
 }
@@ -52,7 +56,7 @@ function getShort(value = "") {
  * @returns {String} output formated shorten text version
  */
 
-function shortme(input = "", options = {}) {
+module.exports = function shortme(input = "", options = {}) {
   // DEFINE OPTIONS FALLBACK
   const delimiterChar = options.delimiter || "_";
   const maxCharLength = options.maxCharLength || 16;
@@ -61,6 +65,7 @@ function shortme(input = "", options = {}) {
   input = decodeURIComponent(input).trim();
   const fragments = input.split(" ");
   const maxIDX = fragments.length - 1;
+  const isAcronym = fragments.filter((fragm) => fragm.length < 4);
 
   // EDGE CASES
   const edgeCases = { deutschland: "dtl", volkswagen: "vw" };
@@ -68,26 +73,26 @@ function shortme(input = "", options = {}) {
   // OUTPUT DEFAULT VARIABLE
   let output = "";
 
+  // LOOP TROUGH INPUT STRING FRAGEMENTS
   fragments.forEach((fragment, idx) => {
     const delimiter = idx === maxIDX ? "" : delimiterChar;
     fragment = umlauts(fragment);
 
-    // EDGE CASE DEUTSCHLAND
+    // EDGE CASES
     if (edgeCases[fragment]) output += edgeCases[fragment] + delimiter;
-    // SINGLE WORD WITH MAX 16 CHARs
+    // SINGLE WORD WITH MAX CHARs
     else if (fragment.length < maxCharLength && fragments.length === 1)
       output += fragment + delimiter;
+    // ACRONYM CASE
+    else if (fragments.length > 2 && isAcronym.length === 0)
+      output += fragment[0];
     // ONLY FIRST CHAR
-    else if (fragments.length > 3 && fragment.length < 5) {
+    else if (fragments.length > 2 && fragment.length < 5) {
       output += fragment[0] + delimiter;
     }
-    // ONLY FIRST CHAR WITHOUT DELIMITER
-    else if (fragments.length > 3) output += fragment[0];
     // DEFAULT GET SHORT VERSION
-    else output += getShort(fragment) + delimiter;
+    else output += getShort(fragment, maxCharLength) + delimiter;
   });
 
   return output;
-}
-
-module.exports.shortme = shortme;
+};

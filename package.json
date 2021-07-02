@@ -1,6 +1,6 @@
 {
   "name": "shortme",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Create a short slug version from your text input",
   "main": "index.js",
   "repository": {
@@ -9,12 +9,22 @@
   },
   "keywords": [
     "slugs",
-    "shortstring"
+    "shortstring",
+    "creative",
+    "label",
+    "filename",
+    "name-convention",
+    "convention"
   ],
-  "author": "Benny Gebauer",
+  "author": {
+    "name": "Benny Gebauer",
+    "email": "hey@bminusg.de",
+    "url": "http://www.bminusg.de"
+  },
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/bminusg/shortme/issues"
   },
-  "homepage": "https://github.com/bminusg/shortme#readme"
+  "homepage": "https://github.com/bminusg/shortme#readme",
+  "devDependencies": {}
 }
