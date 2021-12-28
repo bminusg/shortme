@@ -1,5 +1,6 @@
-function umlauts(value){let umlaut=value.toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss").replace(/é/g,"e").replace(/ô/g,"o").replace(/(\.|,|\(|\)|\')/g,"");return umlaut}function getShort(value="",maxLength){const vowels=["a","e","i","o","u"];const firstChar=value[0];const lastChar=value[value.length-1];let charChunks=value.substring(1,value.length-2).split("");charChunks=charChunks.filter((char)=>vowels.indexOf(char)===-1);while(charChunks.length>maxLength-1){charChunks=charChunks.filter((char,idx)=>idx%2!==0)}return firstChar+charChunks.join("")+lastChar}function shortme(input="",options={}){const delimiterChar=options.delimiter||"_";const maxCharLength=options.maxCharLength||16;input=decodeURIComponent(input).trim();const fragments=input.split(" ");const maxIDX=fragments.length-1;const isAcronym=fragments.filter((fragm)=>fragm.length<4);const edgeCases={deutschland:"dtl",volkswagen:"vw"};let output="";fragments.forEach((fragment,idx)=>{const delimiter=idx===maxIDX?"":delimiterChar;fragment=umlauts(fragment);if(edgeCases[fragment]){output+=edgeCases[fragment]+delimiter;}else if(fragment.length<maxCharLength&&fragments.length===1){output+=fragment+delimiter;}else if(fragments.length>2&&isAcronym.length===0){output+=fragment[0];}else if(fragments.length>2&&fragment.length<5){output+=fragment[0]+delimiter}else{output+=getShort(fragment,maxCharLength)+delimiter}});return output};
+"use strict";
 
+import shortme from "./modules/shortme.js";
 
 // FORBES BRAND API
 //https://www.forbes.com/forbesapi/org/powerful-brands/2020/position/true.json?limit=200
@@ -12,10 +13,15 @@ const app = new Vue({
       campaign: "",
       format: "",
     },
+    options: {
+      delimiter: "_",
+      maxCharLength: 32,
+    },
     brandData: [],
     campaignData: ["Volks-", "für Deutschland", "Brand Story", "Product Story"],
     formatData: [],
     publisherData: [],
+    protectedValues: [],
     slug: "",
     copied: false,
   },
@@ -23,12 +29,29 @@ const app = new Vue({
     this.brandData = await this.fetchAPI("./data/brands.json");
     this.formatData = await this.fetchAPI("./data/formats.json");
     this.publisherData = await this.fetchAPI("./data/publishers.json");
+
+    this.formatData.forEach((format) => this.protectedValues.push(format.slug));
+    this.publisherData.forEach((publisher) =>
+      this.protectedValues.push(publisher.slug)
+    );
+
+    this.setSearchParams();
   },
   methods: {
     clear() {
       for (const prop in this.query) {
         this.query[prop] = "";
       }
+    },
+    updateSlug() {
+      const values = Object.values(this.query).join(" ");
+
+      this.copied = false;
+      this.slug = shortme(values, {
+        delimiter: this.options.delimiter,
+        maxCharLength: this.options.maxCharLength,
+        protect: this.protectedValues,
+      });
     },
     async fetchAPI(uri) {
       try {
@@ -39,6 +62,19 @@ const app = new Vue({
       } catch (e) {
         console.error(e);
         return [];
+      }
+    },
+    setSearchParams() {
+      const searchParams = window.location.search.substring(1).split("&");
+      const queryKeys = Object.keys(this.query);
+
+      for (let searchPair of searchParams) {
+        searchPair = searchPair.split("=");
+        const searchKey = searchPair[0];
+        const searchValue = decodeURIComponent(searchPair[1]);
+
+        if (queryKeys.indexOf(searchKey) === -1) continue;
+        this.query[searchKey] = searchValue;
       }
     },
     fallbackCopyTextToClipboard(text) {
@@ -83,23 +119,13 @@ const app = new Vue({
     query: {
       deep: true,
       handler() {
-        this.copied = false;
-        const keys = Object.keys(this.query);
-        const keysLength = keys.length - 1;
-        const delimiter = "-";
-        let slug = "";
-
-        for (const prop in this.query) {
-          const idx = keys.indexOf(prop);
-          let value = shortme(this.query[prop]);
-
-          if (value === "") continue;
-          if (idx < keysLength) value += delimiter;
-
-          slug += value;
-        }
-
-        this.slug = slug;
+        this.updateSlug();
+      },
+    },
+    options: {
+      deep: true,
+      handler() {
+        this.updateSlug();
       },
     },
   },

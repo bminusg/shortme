@@ -88,6 +88,34 @@
             </form>
           </div>
           <div class="sme--flex-item">
+            <h3 class="mb-4">shortMe options</h3>
+            <div class="mb-3">
+              <label for="inputCampaign" class="form-label"
+                >Delimiter character</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="inputDelimiter"
+                v-model="options.delimiter"
+                maxlength="3"
+                minlength="1"
+                :class="{'is-invalid': options.delimiter.length < 1}"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="inputCampaign" class="form-label"
+                >Max amount of characters</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="inputDelimiter"
+                v-model="options.maxCharLength"
+              />
+            </div>
+          </div>
+          <div class="sme--flex-item">
             <h3 class="mb-4">shortMe output</h3>
             <p class="mb-3"><mark>{{slug}}</mark></p>
             <div v-if="slug">

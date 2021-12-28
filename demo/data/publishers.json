@@ -1,9 +1,5 @@
 [
   {
-    "name": "Default",
-    "slug": "default"
-  },
-  {
     "name": "BILD",
     "slug": "bild"
   },
@@ -28,7 +24,7 @@
     "slug": "bi"
   },
   {
-    "name": "default",
-    "slug": ""
+    "name": "Sport 1",
+    "slug": "sport1"
   }
 ]
