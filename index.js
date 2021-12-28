@@ -1,98 +1,172 @@
+"use strict";
+
 /**
  *
+ * @desc Converting umlauts to html friendly characters
  * @param {String} value
  * @returns {String}
  *
- * Converts Umlauts
  */
 
-function umlauts(value) {
-  let umlaut = value
-    .toLowerCase()
+function replaceSpecialChars(value) {
+  let replaced = value
     .replace(/ä/g, "ae")
     .replace(/ö/g, "oe")
     .replace(/ü/g, "ue")
     .replace(/ß/g, "ss")
     .replace(/é/g, "e")
     .replace(/ô/g, "o")
-    .replace(/(\.|,|\(|\)|\')/g, "");
+    .replace(/(\.|\,|\(|\)|\')/g, "");
 
-  return umlaut;
+  return replaced;
 }
 
 /**
  *
- * @param {String} value
+ * @param {String} fragment
  * @returns {String}
- *
- * Create an Abbreviation in three Steps
- * Step 1: Saving first and last char to ensure recognition value
- * Step 2: Remove vowels from text chunk between first and last char
- * Step 3: If the word length is to long already it will remove every secondth char
- *
  */
 
-function getShort(value = "", maxLength) {
-  const vowels = ["a", "e", "i", "o", "u"];
-  const firstChar = value[0];
-  const lastChar = value[value.length - 1];
-  let charChunks = value.substring(1, value.length - 2).split("");
-
-  // REMOVE VOWELS
-  charChunks = charChunks.filter((char) => vowels.indexOf(char) === -1);
-
-  // REMOVE EVERY SECOND CHAR IF MAX LENGTH MATCHES
-  while (charChunks.length > maxLength - 1) {
-    charChunks = charChunks.filter((char, idx) => idx % 2 !== 0);
-  }
-
-  return firstChar + charChunks.join("") + lastChar;
+function replaceDelimiterChars(fragment) {
+  fragment = fragment.replace(/\-|\_|\:|\:\:|\|\|/g, "");
+  return fragment;
 }
+
+function defineCharChunks(value = "", options = {}) {
+  return {
+    firstChar: value[0],
+    lastChar: value[value.length - 1],
+    chunks: value.substring(1, value.length - 1).split(""),
+    isProtected: options.protect.indexOf(value) > -1 ? true : false,
+    mergeChunk() {
+      if (this.chunks.length < 2) return this.firstChar;
+      return this.firstChar + this.chunks.join("") + this.lastChar;
+    },
+    charLength() {
+      const chunkLength = this.chunks.length;
+      if (chunkLength === 1) return 1;
+      return chunkLength + 2;
+    },
+  };
+}
+
+const shortMethods = {
+  /**
+   * @description replace with first letter if char amount of the word is smaller then 4
+   * @param {Array} fragments
+   * @returns {Array}
+   */
+  replaceArticles(fragments = [], options) {
+    const replacedArticles = fragments.map((fragment) =>
+      options.protect.indexOf(fragment) === -1 && fragment.length <= 6
+        ? fragment[0]
+        : fragment
+    );
+    return replacedArticles;
+  },
+
+  /**
+   * @description remove every vowel from every fragment
+   * @param {Array} fragments
+   * @param {Object} options
+   * @returns {Array}
+   */
+  removeVowels(fragments = [], options) {
+    const vowels = ["a", "e", "i", "o", "u"];
+    const removedVowelsFragments = [];
+    let charChunks = fragments.map((fragment) =>
+      defineCharChunks(fragment, options)
+    );
+
+    for (let charChunk of charChunks) {
+      if (!charChunk.isProtected) {
+        charChunk.chunks = charChunk.chunks.filter(
+          (char) => vowels.indexOf(char) === -1
+        );
+      }
+
+      const removedVowels = charChunk.mergeChunk();
+      removedVowelsFragments.push(removedVowels);
+    }
+
+    return removedVowelsFragments;
+  },
+
+  /**
+   * @description remove every second char from word
+   * @param {Array} fragments
+   * @param {Object} options
+   * @returns {Array}
+   */
+  removeEverySecondChar(fragments = [], options) {
+    let removedEverySecondChar = [];
+    let charChunks = fragments.map((fragment) =>
+      defineCharChunks(fragment, options)
+    );
+
+    charChunks.forEach((charChunk) => {
+      if (!charChunk.isProtected)
+        charChunk.chunks = charChunk.chunks.filter(
+          (char, idx) => idx % 2 !== 0
+        );
+
+      const slaughted = charChunk.mergeChunk();
+      removedEverySecondChar.push(slaughted);
+    });
+
+    return removedEverySecondChar;
+  },
+
+  /**
+   * @description concludes all first letters to one array item
+   * @param {Array} fragments
+   * @returns {Array}
+   */
+  defineAcronym(fragments = []) {
+    let acronym = fragments.map((fragment) => fragment[0]);
+    acronym = [acronym.join("")];
+    return acronym;
+  },
+};
 
 /**
  *
  * @param {String} input Raw text input
- * @param {Object} options Configuration options
- * @returns {String} output formated shorten text version
+ * @param {Object} options Optional configuration options
+ * @returns {String} formated shorten text version
  */
+module.exports = function shortme(
+  input = "",
+  options = {
+    delimiter: "_",
+    maxCharLength: 16,
+    protect: [],
+  }
+) {
+  // BASIC TEXT CONVERTION
+  input = decodeURIComponent(input).toLowerCase().trim();
+  input = replaceDelimiterChars(input);
 
-module.exports = function shortme(input = "", options = {}) {
-  // DEFINE OPTIONS FALLBACK
-  const delimiterChar = options.delimiter || "_";
-  const maxCharLength = options.maxCharLength || 16;
+  // VALIDATE OPTIONS
+  options.maxCharLength = parseInt(options.maxCharLength);
 
-  // INPUT BASED VARIABLES
-  input = decodeURIComponent(input).trim();
-  const fragments = input.split(" ");
-  const maxIDX = fragments.length - 1;
-  const isAcronym = fragments.filter((fragm) => fragm.length < 4);
+  // BUILD PREFORMATTED STRING FRAGEMENTS
+  let fragments = input
+    .split(" ")
+    .filter((inputChunk) => inputChunk.length > 1)
+    .map((inputChunk) => replaceSpecialChars(inputChunk));
 
-  // EDGE CASES
-  const edgeCases = { deutschland: "dtl", volkswagen: "vw" };
+  // DEFINE INITIAL OUTPUT
+  let output = fragments.join(options.delimiter);
 
-  // OUTPUT DEFAULT VARIABLE
-  let output = "";
+  // SHORTEN METHOD LOOP
+  for (const method in shortMethods) {
+    fragments = shortMethods[method](fragments, options);
+    output = fragments.join(options.delimiter);
 
-  // LOOP TROUGH INPUT STRING FRAGEMENTS
-  fragments.forEach((fragment, idx) => {
-    const delimiter = idx === maxIDX ? "" : delimiterChar;
-    fragment = umlauts(fragment);
-
-    // EDGE CASES
-    if (edgeCases[fragment]) output += edgeCases[fragment] + delimiter;
-    // SINGLE WORD WITH MAX CHARs
-    else if (fragment.length < maxCharLength && fragments.length === 1)
-      output += fragment + delimiter;
-    // ACRONYM CASE
-    else if (fragments.length > 2 && isAcronym.length === 0)
-      output += fragment[0];
-    // ONLY FIRST CHAR
-    else if (fragments.length > 2 && fragment.length < 5) {
-      output += fragment[0] + delimiter;
-    }
-    // DEFAULT GET SHORT VERSION
-    else output += getShort(fragment, maxCharLength) + delimiter;
-  });
+    console.log("OUTPUT", output, output.length);
+    if (output.length <= options.maxCharLength) break;
+  }
 
   return output;
 };
