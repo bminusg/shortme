@@ -145,11 +145,14 @@ const shortMethods = {
 
 /**
  *
- * @param {String} input Raw text input
- * @param {Object} options Optional configuration options
- * @returns {String} formated shorten text version
+ * @param {String} input - Raw text input
+ * @param {Object} options - Optional configuration options
+ * @param {String} options.delimiter - delimiter character between every word
+ * @param {Number} options.maxCharLength - number of max character length for returning value
+ * @param {[String]} options.protect - Array of strings protected from severel shorten methods
+ * @returns {String} - formated shorten text version
  */
-module.exports = function shortme(input = "", options) {
+module.exports = function shortme(input = "", options = {}) {
   // BASIC TEXT CONVERTION
   input = decodeURIComponent(input).toLowerCase().trim();
   input = replaceDelimiterChars(input);

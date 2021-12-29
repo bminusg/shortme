@@ -45,13 +45,14 @@ const app = new Vue({
     },
     updateSlug() {
       const values = Object.values(this.query).join(" ");
-
-      this.copied = false;
-      this.slug = shortme(values, {
+      const options = {
         delimiter: this.options.delimiter,
         maxCharLength: this.options.maxCharLength,
         protect: this.protectedValues,
-      });
+      };
+
+      this.copied = false;
+      this.slug = shortme(values, options);
     },
     async fetchAPI(uri) {
       try {
