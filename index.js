@@ -58,7 +58,7 @@ const shortMethods = {
    */
   replaceArticles(fragments = [], options) {
     const replacedArticles = fragments.map((fragment) =>
-      options.protect.indexOf(fragment) === -1 && fragment.length <= 6
+      options.protect.indexOf(fragment) === -1 && fragment.length < 4
         ? fragment[0]
         : fragment
     );
@@ -123,9 +123,23 @@ const shortMethods = {
    * @returns {Array}
    */
   defineAcronym(fragments = []) {
-    let acronym = fragments.map((fragment) => fragment[0]);
-    acronym = [acronym.join("")];
+    let acronym = Array(
+      fragments.reduce((pre, current) => (pre += current[0]), "")
+    );
     return acronym;
+  },
+
+  /**
+   * @description cutting the acyronym to the max character length
+   * @param {Array} fragments
+   * @param {Object} options
+   * @returns {Array}
+   */
+  cutAcronym(fragments = [], options) {
+    const cutedAcronym = Array(
+      fragments[0].substring(0, options.maxCharLength)
+    );
+    return cutedAcronym;
   },
 };
 
@@ -135,20 +149,26 @@ const shortMethods = {
  * @param {Object} options Optional configuration options
  * @returns {String} formated shorten text version
  */
-module.exports = function shortme(
-  input = "",
-  options = {
-    delimiter: "_",
-    maxCharLength: 16,
-    protect: [],
-  }
-) {
+module.exports = function shortme(input = "", options) {
   // BASIC TEXT CONVERTION
   input = decodeURIComponent(input).toLowerCase().trim();
   input = replaceDelimiterChars(input);
 
   // VALIDATE OPTIONS
-  options.maxCharLength = parseInt(options.maxCharLength);
+  options = {
+    delimiter:
+      options.maxCharLength && typeof options.delimiter === "string"
+        ? options.delimiter
+        : "_",
+    maxCharLength:
+      options.maxCharLength && !Number.isNaN(parseInt(options.maxCharLength))
+        ? parseInt(options.maxCharLength)
+        : 16,
+    protect:
+      options.maxCharLength && Array.isArray(options.protect)
+        ? options.protect
+        : [],
+  };
 
   // BUILD PREFORMATTED STRING FRAGEMENTS
   let fragments = input
@@ -164,7 +184,6 @@ module.exports = function shortme(
     fragments = shortMethods[method](fragments, options);
     output = fragments.join(options.delimiter);
 
-    console.log("OUTPUT", output, output.length);
     if (output.length <= options.maxCharLength) break;
   }
 

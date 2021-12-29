@@ -123,9 +123,23 @@ const shortMethods = {
    * @returns {Array}
    */
   defineAcronym(fragments = []) {
-    let acronym = fragments.map((fragment) => fragment[0]);
-    acronym = [acronym.join("")];
+    let acronym = Array(
+      fragments.reduce((pre, current) => (pre += current[0]), "")
+    );
     return acronym;
+  },
+
+  /**
+   * @description cutting the acyronym to the max character length
+   * @param {Array} fragments
+   * @param {Object} options
+   * @returns {Array}
+   */
+  cutAcronym(fragments = [], options) {
+    const cutedAcronym = Array(
+      fragments[0].substring(0, options.maxCharLength)
+    );
+    return cutedAcronym;
   },
 };
 
@@ -135,20 +149,27 @@ const shortMethods = {
  * @param {Object} options Optional configuration options
  * @returns {String} formated shorten text version
  */
-export default (
-  input = "",
-  options = {
-    delimiter: "_",
-    maxCharLength: 16,
-    protect: [],
-  }
-) => {
+export default (input = "", options) => {
+  console.time("TIMER");
   // BASIC TEXT CONVERTION
   input = decodeURIComponent(input).toLowerCase().trim();
   input = replaceDelimiterChars(input);
 
   // VALIDATE OPTIONS
-  options.maxCharLength = parseInt(options.maxCharLength);
+  options = {
+    delimiter:
+      options.maxCharLength && typeof options.delimiter === "string"
+        ? options.delimiter
+        : "_",
+    maxCharLength:
+      options.maxCharLength && !Number.isNaN(parseInt(options.maxCharLength))
+        ? parseInt(options.maxCharLength)
+        : 16,
+    protect:
+      options.maxCharLength && Array.isArray(options.protect)
+        ? options.protect
+        : [],
+  };
 
   // BUILD PREFORMATTED STRING FRAGEMENTS
   let fragments = input
@@ -168,5 +189,6 @@ export default (
     if (output.length <= options.maxCharLength) break;
   }
 
+  console.timeEnd("TIMER");
   return output;
 };
